@@ -116,7 +116,8 @@ function externalLink(paper, className, text) {
   link.href = paper.url;
   link.target = "_blank";
   link.rel = "noopener noreferrer";
-  link.setAttribute("aria-label", `${paper.name} – åpnes i ny fane`);
+  const label = text === paper.name ? paper.name : `${text} – ${paper.name}`;
+  link.setAttribute("aria-label", `${label} – åpnes i ny fane`);
   return link;
 }
 
