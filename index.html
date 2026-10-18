@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Finn din neste leseopplevelse. Utforsk norske aviser fra hele landet, og samle favorittene dine på ett sted.">
     <meta name="referrer" content="no-referrer">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; connect-src https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com; img-src 'self' https://www.google-analytics.com https://*.google-analytics.com; base-uri 'none'; form-action 'none'; object-src 'none'">
     <meta name="theme-color" content="#f6f5f0">
     <link rel="stylesheet" href="style.css">
     <script src="app.js" defer></script>
@@ -81,8 +81,10 @@
           <p class="directory-footnote"><span aria-hidden="true">↗</span> Vi sender deg rett til avisen. God lesning!</p>
         </section>
       </div>
-      <section class="about" id="om"><div><p class="eyebrow">EN LITEN HYLLE. ET STORT MEDIELANDSKAP.</p><h2>Nyhetene er der ute.<br>Finn veien til dem her.</h2></div><div><p>Papers United er en uavhengig veiviser til norske aviser og nyhetsmedier. Vi samler lenkene, ikke nyhetene, slik at du kan utforske både de store redaksjonene og stemmene nær deg.</p><p>Utvalget er håndplukket og ikke en komplett oversikt over alle norske aviser. Favorittene lagres kun i nettleseren din. Ingen konto, ingen sporing. Avisene har egne vilkår og kan kreve abonnement.</p></div></section>
+      <section class="about" id="om"><div><p class="eyebrow">EN LITEN HYLLE. ET STORT MEDIELANDSKAP.</p><h2>Nyhetene er der ute.<br>Finn veien til dem her.</h2></div><div><p>Papers United er en uavhengig veiviser til norske aviser og nyhetsmedier. Vi samler lenkene, ikke nyhetene, slik at du kan utforske både de store redaksjonene og stemmene nær deg.</p><p>Utvalget er håndplukket og ikke en komplett oversikt over alle norske aviser. Favorittene lagres kun i nettleseren din. Ingen konto. Vi bruker kun Google Analytics dersom du samtykker, for å forstå hvordan nettstedet brukes. Du kan endre valget ditt når som helst via «Personvernvalg» nederst på siden. Avisene har egne vilkår og kan kreve abonnement.</p></div></section>
     </main>
-    <footer><a class="footer-brand" href="./">Papers United<span>© 2026</span></a><p>Laget for nysgjerrige lesere i hele Norge.</p><a href="#main">Til toppen ↑</a></footer>
+    <section class="privacy-information" id="personvern" aria-labelledby="privacy-title"><h2 id="privacy-title">Personvern og besøksstatistikk</h2><p>Vi bruker Google Analytics 4 bare dersom du velger «Godta analyse». Da kan Google motta opplysninger om besøk og bruk av nettsiden, blant annet sidevisninger og tekniske opplysninger. Opplysninger kan bli behandlet utenfor EØS. Vi bruker statistikken til å forbedre Papers United. Avslår du, laster vi ikke Google Analytics. Valget lagres lokalt i nettleseren din, og du kan trekke tilbake samtykket via «Personvernvalg». Favorittene dine lagres også lokalt. For spørsmål om personvern: kontakt nettstedets ansvarlige.</p></section>
+    <div class="consent-banner" id="consent-banner" role="region" aria-label="Valg for besøksstatistikk" hidden><div><strong>Kan vi bruke anonymisert besøksstatistikk?</strong><p>Med ditt samtykke bruker vi Google Analytics til å forstå besøk på Papers United. Du kan avslå og bruke nettsiden som normalt. <a href="#personvern">Les om personvern</a>.</p></div><div class="consent-actions"><button id="consent-decline" type="button">Avslå</button><button id="consent-accept" type="button">Godta analyse</button></div></div>
+    <footer><a class="footer-brand" href="./">Papers United<span>© 2026</span></a><p>Laget for nysgjerrige lesere i hele Norge.</p><div class="footer-actions"><button type="button" id="privacy-settings">Personvernvalg</button><a href="#main">Til toppen ↑</a></div></footer>
   </body>
 </html>
