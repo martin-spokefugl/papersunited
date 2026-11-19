@@ -31,6 +31,7 @@ const newspapers = [
   ["ifinnmark", "iFinnmark", "ifinnmark.no", "regional", "Finnmark", "Hammerfest", "Nyheter fra hele Finnmark.", "blue"],
   ["sagat", "Ságat", "sagat.no", "local", "Finnmark", "Karasjok", "Samiske nyheter på norsk."],
   ["an", "Avisa Nordland", "an.no", "regional", "Nordland", "Bodø", "Aktuelt fra Bodø og Salten."],
+  ["bladet-vesteralen", "Bladet Vesterålen", "blv.no", "local", "Nordland", "Sortland", "Lokalnyheter fra Vesterålen."],
   ["lofotposten", "Lofotposten", "lofotposten.no", "local", "Nordland", "Svolvær", "Lofotens egne historier og nyheter."],
   ["helgelendingen", "Helgelendingen", "helg.no", "local", "Nordland", "Mosjøen", "Tett på folk og nyheter på Helgeland."],
   ["ranablad", "Rana Blad", "ranablad.no", "local", "Nordland", "Mo i Rana", "Lokale nyheter fra Rana."],
@@ -65,6 +66,7 @@ const newspapers = [
   ["havis", "Haugesunds Avis", "h-avis.no", "local", "Rogaland", "Haugesund", "Aktuelt fra Haugalandet og Sunnhordland."],
   ["dalane", "Dalane Tidende", "dalane-tidende.no", "local", "Rogaland", "Egersund", "Lokale historier fra Dalane."],
   ["jaerbladet", "Jærbladet", "jbl.no", "local", "Rogaland", "Bryne", "Nyheter fra Jæren."],
+  ["firdaposten", "Firdaposten", "firdaposten.no", "local", "Vestland", "Florø", "Lokalnyheter fra Florø og Kinn."],
   ["firda", "Firda", "firda.no", "local", "Vestland", "Førde", "Nyheter fra Sunnfjord og Ytre Sogn."],
   ["sogn", "Sogn Avis", "sognavis.no", "local", "Vestland", "Leikanger", "Nyheter fra bygdene langs Sognefjorden."],
   ["sunnhordland", "Sunnhordland", "sunnhordland.no", "local", "Vestland", "Stord", "Nyheter fra Stord og Sunnhordland."],
@@ -212,3 +214,45 @@ grid.addEventListener("click", event => {
   focusTarget.focus({ preventScroll: true });
 });
 render();
+
+
+// Google Analytics is loaded only after an affirmative choice.
+// Measurement ID is public; it is not a password.
+(() => {
+  const consentKey = "papers-united-analytics-consent-v1";
+  const measurementId = "G-5XR0RRHLLH";
+  const banner = document.querySelector("#consent-banner");
+  const settings = document.querySelector("#privacy-settings");
+  let choice = null;
+  let analyticsLoaded = false;
+  try { choice = localStorage.getItem(consentKey); } catch { /* storage unavailable */ }
+
+  function loadAnalytics() {
+    if (analyticsLoaded) return;
+    analyticsLoaded = true;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag("js", new Date());
+    window.gtag("config", measurementId, { anonymize_ip: true });
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+    document.head.append(script);
+  }
+
+  function saveChoice(value) {
+    const wasLoaded = analyticsLoaded;
+    choice = value;
+    try { localStorage.setItem(consentKey, value); } catch { /* choice lasts this visit */ }
+    banner.hidden = true;
+    if (value === "accepted") loadAnalytics();
+    // Reload to remove an already loaded Google script after withdrawal.
+    if (value === "declined" && wasLoaded) window.location.reload();
+  }
+
+  document.querySelector("#consent-accept").addEventListener("click", () => saveChoice("accepted"));
+  document.querySelector("#consent-decline").addEventListener("click", () => saveChoice("declined"));
+  settings.addEventListener("click", () => { banner.hidden = false; document.querySelector("#consent-decline").focus(); });
+  if (choice === "accepted") loadAnalytics();
+  else if (choice !== "declined") banner.hidden = false;
+})();
