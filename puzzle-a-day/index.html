@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A daily calendar placement puzzle from Papers United.">
+    <meta name="theme-color" content="#f6f5f0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+    <link rel="stylesheet" href="puzzle.css">
+    <script type="module" src="app.js"></script>
+    <title>Daily Calendar Puzzle — Papers United</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#game">Skip to puzzle</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Papers United home"><span class="brand-mark" aria-hidden="true">p<span>u</span></span><span>Papers<span class="brand-light">United</span><small>NORWEGIAN PERSPECTIVES. TOGETHER.</small></span></a>
+      <nav aria-label="Main navigation"><a href="../">← Back to Papers United</a></nav>
+    </header>
+    <main id="game">
+      <section class="intro">
+        <p class="eyebrow">A DAILY BRAIN BREAK</p>
+        <h1>Daily Calendar <em>Puzzle</em></h1>
+        <p>Place the pieces around the three date markers. Choose a day to try another calendar challenge.</p>
+        <p class="date-picker"><label for="challenge-date">Challenge date</label><input id="challenge-date" type="date"></p>
+      </section>
+
+      <section class="game-layout" aria-label="Calendar puzzle">
+        <div class="board-panel">
+          <div class="section-heading"><div><p class="eyebrow">TODAY'S CHALLENGE</p><h2 id="challenge-label"></h2></div><span class="pill" id="progress">0 / 8 placed</span></div>
+          <div id="board" class="board" role="group" aria-label="Calendar board"></div>
+          <div class="status-row"><p id="message" role="status" aria-live="polite"></p><p>Time <strong id="timer">00:00</strong></p></div>
+          <div class="controls" aria-label="Puzzle controls">
+            <button type="button" id="rotate-ccw" aria-label="Rotate selected piece counterclockwise">↶ Rotate</button>
+            <button type="button" id="rotate-cw" aria-label="Rotate selected piece clockwise">Rotate ↻</button>
+            <button type="button" id="undo">Undo</button>
+            <button type="button" id="hint">Hint</button>
+            <button type="button" id="solution">Show solution</button>
+            <button type="button" id="pause">Pause timer</button>
+            <button type="button" id="reset">Reset</button>
+          </div>
+        </div>
+
+        <aside class="tray-panel">
+          <div class="section-heading"><div><p class="eyebrow">THE PIECES</p><h2>Piece tray</h2></div></div>
+          <p class="instructions">Select a piece, then tap a board square to place its top-left cell there. On desktop, drag a selected piece. Use the rotate buttons or keyboard keys <kbd>R</kbd> / <kbd>Shift</kbd>+<kbd>R</kbd>. Press <kbd>Escape</kbd> to return a placed piece.</p>
+          <div id="tray" class="tray" aria-label="Unplaced puzzle pieces"></div>
+          <p class="geometry-warning" id="geometry-warning"></p>
+          <p class="stats" id="stats"></p>
+        </aside>
+      </section>
+    </main>
+    <footer><a href="../">Papers United</a><span>Independent daily puzzle · no account required</span></footer>
+  </body>
+</html>
