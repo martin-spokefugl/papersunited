@@ -1,27 +1,44 @@
-# Daily Calendar Puzzle
+# Dagens utfordring
 
-A vanilla JavaScript calendar-piece puzzle page served as `/puzzle-a-day/` by the repository's static GitHub Pages site. It uses no build tools, external assets, or additional services.
+Et norsk kalenderpuslespill i vanlig HTML, CSS og JavaScript. Den statiske siden publiseres på `/puzzle-a-day/` sammen med Papers United. Ingen byggesteg, kontoer, eksterne biblioteker eller tjenester er nødvendig.
 
-## Run locally
+## Lokal kjøring og tester
 
-From the repository root, run `python3 -m http.server 8000` and open <http://localhost:8000/puzzle-a-day/>. The game is also linked from the Papers United header and listed in `sitemap.xml`.
+Fra rotmappen i repoet:
 
-Run the logic tests with `node --test puzzle-a-day/test/*.test.js`.
+```sh
+python3 -m http.server 8000
+```
 
-## Model and rules
+Åpne <http://localhost:8000/puzzle-a-day/>. Kjør logikk- og løsertestene med:
 
-`board.js` exports the calendar labels, playable coordinates, and local-date marker mapping. The written row layout has **50** playable cells: 12 month labels, 31 dates, and 7 weekdays. It does not have the 52 cells stated elsewhere in the brief.
+```sh
+node --test puzzle-a-day/test/*.test.js
+```
 
-`pieces.js` keeps the eight photo-traced pieces in one data file. Coordinates are normalized relative cell positions; only rotations are enabled because the physical reflection rule was not established. The photo as supplied does not let us verify the traced geometry. These definitions total **41** cells, not the 49 required to cover the 47 non-target cells. Consequently completion and solver features correctly report that the puzzle is unsatisfiable; the game does not claim to produce a valid solution. Confirming the exact piece squares and resolving the board/piece totals are necessary before a playable, validated challenge can be delivered.
+## Brett og brikker
 
-`logic.js` contains orientation transforms, grid-based legality checks, connectivity validation, exact-cover-style recursive search, and completion validation. The solver rejects area mismatches before searching and validates candidates against the same board model.
+`board.js` beskriver brettet som åtte rader med sju kolonner. De 50 spillbare rutene er 12 måneder, 31 datoer og 7 ukedager. Datoens tre mål beregnes fra nettleserens lokale kalenderdato.
 
-## Input and persistence
+`pieces.js` inneholder de ti brikkeformene som eieren har oppgitt med rader av `X` og `.`. Formene har 47 ruter til sammen. Testene kontrollerer antall brikker/ruter, sammenheng, unike ruter, rotasjoner og speilvendte orienteringer. Eksakt-cover-løseren finner plasseringer for de seks angitte prøvedatoene, alle ukedagene og alle datoer i 2026 og skuddåret 2028.
 
-The date picker uses the browser's local date; target dates are validated by the native date input and JavaScript date construction. Select a piece and tap/click its desired top-left square; desktop users can drag pieces. Rotations use the control buttons or `R` / `Shift+R`; Escape clears selection. Pieces can be returned by selecting one of their occupied squares. Undo and reset are included.
+`logic.js` normaliserer koordinater etter rotasjon og speiling, dedupliserer symmetriske orienteringer, genererer lovlige plasseringer og søker med eksakt-cover/backtracking og minste antall kandidater. `validateComplete` kontrollerer løsningen uavhengig av søket: hver brikke én gang, ingen overlapp, ingen målruter dekket og alle andre spillruter dekket.
 
-Versioned localStorage saves the selected date, placements, timer, pause state, and basic completion statistics. Invalid or unavailable data falls back to a fresh game. Saved placements are structurally checked, and every move uses logical cells for validation.
+## Spill, lagring og statistikk
 
-## Maintenance and known limitations
+Velg en brikke og trykk på brettet; på datamaskin kan brikken også dras. Bruk knappene eller `R` / `Shift+R` for å rotere, `F` for å speile og `Esc` for å velge bort. Trykk på en plassert brikke for å ta den tilbake. Det er alltid mulig å nullstille eller angre plasseringer.
 
-Keep UI in `app.js`, isolated page styles in `puzzle.css`, and data/logic in their respective modules. Add behavioral coverage to `test/game.test.js` and run the test command above. The source photo/brief mismatch is the only known blocker to solver, hint, reveal, and full-game completion. Hints and solution reveal fail honestly until geometry is reconciled. No backend or account is required.
+Hint bruker solverens løsning for gjeldende plassering. «Vis løsning» krever bekreftelse og markerer runden som hjulpet. Deling bruker Web Share API når tilgjengelig, ellers utklippstavle med reserve for eldre nettlesere.
+
+Spilltilstand og statistikk lagres lokalt i nettleseren under separate, versjonerte nøkler (`v2`). Eldre spilltilstand fra prototypen gjenopprettes ikke. Statistikken teller én beste fullføring per kalenderdato. Rekke og personlig rekord teller bare fullføringer uten hint eller løsningsvisning; gjennomsnitt og fullførte datoer inkluderer også hjulpne runder. Nettleserlagring som mangler, er ugyldig eller utilgjengelig gir en tom, spillbar økt.
+
+## Vedlikehold og begrensninger
+
+- Brettdata: `board.js`
+- Brikkedata: `pieces.js`
+- Regler og solver: `logic.js`
+- Grensesnitt og spillflyt: `app.js`, `index.html`, `puzzle.css`
+- Lokal lagring: `storage.js`
+- Automatiserte tester: `test/game.test.js`
+
+Søkekjøringen for de testede datoene er kort nok til å kjøre synkront uten å fryse grensesnittet; hvis brikkesettet utvides, vurder Web Worker og tidsavbrudd. Ingen kjente blokkeringer for de validerte datoene. Ingen serverbaserte resultattavler eller synkronisering mellom enheter.

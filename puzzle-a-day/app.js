@@ -1,61 +1,70 @@
 import { CELLS, ROWS, targetForDate } from "./board.js";
-import { PIECES, PIECE_GEOMETRY_VERIFIED } from "./pieces.js";
+import { PIECES } from "./pieces.js";
 import { isLegalPlacement, placementCells, solve, transform, validateComplete } from "./logic.js";
 import { loadGame, loadStats, saveGame, saveStats } from "./storage.js";
 
 const board = document.querySelector("#board");
 const tray = document.querySelector("#tray");
 const dateInput = document.querySelector("#challenge-date");
-const challengeLabel = document.querySelector("#challenge-label");
 const message = document.querySelector("#message");
 const pieceById = new Map(PIECES.map(piece => [piece.id, piece]));
 const today = new Date();
 const localDate = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 const saved = loadGame();
+const stats = loadStats();
+
 function isValidDateString(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year, month, day] = value.split("-").map(Number);
   const date = new Date(year, month - 1, day);
   return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 }
+
+function currentDate() {
+  const [year, month, day] = state.date.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  return isValidDateString(state.date) ? date : today;
+}
+
 const state = {
   date: isValidDateString(saved?.date) ? saved.date : localDate(today),
   placements: Array.isArray(saved?.placements) ? saved.placements.filter(item =>
     item && typeof item === "object" && pieceById.has(item.id)
       && Array.isArray(item.cells) && item.cells.every(key => typeof key === "string")
       && Number.isInteger(item.rotation) && item.rotation >= 0 && item.rotation < 4
+      && typeof item.flipX === "boolean"
       && item.origin && Number.isInteger(item.origin.x) && Number.isInteger(item.origin.y),
   ) : [],
   selected: null,
-  elapsed: Math.max(0, saved?.elapsed || 0),
-  paused: saved?.paused ?? false,
-  started: saved?.started ?? false,
+  rotation: 0,
+  flipX: false,
+  elapsed: Number.isFinite(saved?.elapsed) ? Math.max(0, saved.elapsed) : 0,
+  paused: saved?.paused === true,
+  started: saved?.started === true,
+  hintsUsed: Number.isInteger(saved?.hintsUsed) ? Math.max(0, saved.hintsUsed) : 0,
+  assisted: saved?.assisted === true,
+  completed: saved?.completed === true,
   history: [],
-  hints: 0,
 };
-const stats = loadStats();
 let tick = Date.now();
 let dragId = null;
 const restoredTargets = targetForDate(currentDate());
 const restoredIds = new Set();
-const validRestored = [];
+const restored = [];
 for (const item of state.placements) {
   const piece = pieceById.get(item.id);
-  const expected = placementCells(piece, item.origin, { rotation: item.rotation });
-  const cells = item.cells || expected;
-  const occupied = new Set(validRestored.flatMap(placement => placement.cells));
-  if (restoredIds.has(item.id) || expected.length !== cells.length
-    || expected.some(key => !cells.includes(key))
-    || !isLegalPlacement(piece, item.origin, occupied, restoredTargets, { rotation: item.rotation })) continue;
+  const expected = placementCells(piece, item.origin, { rotation: item.rotation, flipX: item.flipX });
+  const occupied = new Set(restored.flatMap(placement => placement.cells));
+  if (restoredIds.has(item.id) || expected.length !== item.cells.length
+    || expected.some(key => !item.cells.includes(key))
+    || !isLegalPlacement(piece, item.origin, occupied, restoredTargets, { rotation: item.rotation, flipX: item.flipX })) continue;
   restoredIds.add(item.id);
-  validRestored.push({ id: item.id, origin: item.origin, rotation: item.rotation, cells: expected });
+  restored.push({ ...item, cells: expected });
 }
-state.placements = validRestored;
-
-function currentDate() {
-  const [year, month, day] = state.date.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  return Number.isNaN(date.getTime()) || date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day ? today : date;
+state.placements = restored;
+if (state.completed && !validateComplete(state.placements, restoredTargets, PIECES)) {
+  state.completed = false;
+  state.assisted = false;
 }
 
 function snapshot() {
@@ -64,12 +73,27 @@ function snapshot() {
 }
 
 function persist() {
-  saveGame({ date: state.date, placements: state.placements, elapsed: state.elapsed, paused: state.paused, started: state.started });
-  document.querySelector("#progress").textContent = `${state.placements.length} / 8 placed`;
+  saveGame({
+    date: state.date,
+    placements: state.placements,
+    elapsed: state.elapsed,
+    paused: state.paused,
+    started: state.started,
+    hintsUsed: state.hintsUsed,
+    assisted: state.assisted,
+    completed: state.completed,
+  });
+  document.querySelector("#progress").textContent = `${state.placements.length} / ${PIECES.length} brikker`;
+}
+
+function timeText(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainder = Math.floor(seconds % 60);
+  return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
 }
 
 function updateTimer() {
-  document.querySelector("#timer").textContent = `${String(Math.floor(state.elapsed / 60)).padStart(2, "0")}:${String(Math.floor(state.elapsed % 60)).padStart(2, "0")}`;
+  document.querySelector("#timer").textContent = timeText(state.elapsed);
 }
 
 function setMessage(text, kind = "") {
@@ -82,7 +106,7 @@ function tile(className, label, key, target, occupied) {
   cell.type = "button";
   cell.className = `cell ${className}${target ? " target" : ""}${occupied ? " occupied" : ""}`;
   cell.dataset.key = key || "";
-  cell.setAttribute("aria-label", `${label || "Unavailable"}${target ? ", date marker" : ""}${occupied ? ", piece placed" : ""}`);
+  cell.setAttribute("aria-label", `${label || "Ikke spillbar"}${target ? ", dagens synlige dato" : ""}${occupied ? ", brikke plassert" : ""}`);
   cell.textContent = label || "";
   if (!key) { cell.disabled = true; cell.setAttribute("aria-hidden", "true"); }
   return cell;
@@ -100,26 +124,27 @@ function renderBoard() {
       if (occupied.has(key)) {
         const piece = pieceById.get(occupied.get(key));
         button.style.setProperty("--piece-color", piece.color);
-        button.title = `${piece.name}; activate to return it to the tray`;
+        button.title = `${piece.name}; trykk for å ta brikken tilbake`;
       }
       board.append(button);
     }
   }
 }
 
-function renderPiece(piece, rotation = 0) {
-  const cells = transform(piece.cells, { rotation });
+function renderPiece(piece, rotation = 0, flipX = false) {
+  const cells = transform(piece.cells, { rotation, flipX });
   const width = Math.max(...cells.map(([x]) => x)) + 1;
   const height = Math.max(...cells.map(([, y]) => y)) + 1;
   const preview = document.createElement("span");
   preview.className = "piece-preview";
-  preview.style.gridTemplateColumns = `repeat(${width}, 18px)`;
-  preview.style.gridTemplateRows = `repeat(${height}, 18px)`;
+  preview.style.gridTemplateColumns = `repeat(${width}, 16px)`;
+  preview.style.gridTemplateRows = `repeat(${height}, 16px)`;
   cells.forEach(([x, y]) => {
     const square = document.createElement("i");
     square.style.gridColumn = String(x + 1);
     square.style.gridRow = String(y + 1);
     square.style.backgroundColor = piece.color;
+    square.setAttribute("aria-hidden", "true");
     preview.append(square);
   });
   return preview;
@@ -132,12 +157,12 @@ function renderTray() {
     if (placed.has(piece.id)) continue;
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `piece${state.selected === piece.id ? " selected" : ""}`;
+    button.className = `piece${state.selected === piece.id ? " selected" : ""}${state.hintPiece === piece.id ? " hint-piece" : ""}`;
     button.dataset.piece = piece.id;
     button.setAttribute("aria-pressed", String(state.selected === piece.id));
-    button.setAttribute("aria-label", `${piece.name}, ${piece.cells.length} squares`);
+    button.setAttribute("aria-label", `${piece.name}, ${piece.cells.length} ruter`);
     button.draggable = true;
-    button.append(renderPiece(piece, state.selected === piece.id ? selectedRotation : 0));
+    button.append(renderPiece(piece, state.selected === piece.id ? state.rotation : 0, state.selected === piece.id && state.flipX));
     const label = document.createElement("span");
     label.textContent = piece.name;
     button.append(label);
@@ -145,116 +170,189 @@ function renderTray() {
   }
 }
 
-let selectedRotation = 0;
+function streakStats() {
+  const wins = stats.completedDates.filter(item => !item.assisted && item.hints === 0).map(item => item.date);
+  const dates = new Set(wins);
+  const todayKey = localDate(today);
+  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+  let current = 0;
+  let cursor = dates.has(todayKey) ? today : yesterday;
+  while (dates.has(localDate(cursor))) {
+    current++;
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() - 1);
+  }
+  const sorted = [...dates].sort();
+  let longest = 0;
+  let run = 0;
+  let previous = null;
+  for (const key of sorted) {
+    const date = new Date(`${key}T00:00:00Z`);
+    const day = date.getTime() / 86400000;
+    run = previous !== null && day === previous + 1 ? run + 1 : 1;
+    longest = Math.max(longest, run);
+    previous = day;
+  }
+  return { current, longest };
+}
+
+function renderStats() {
+  const results = stats.completedDates;
+  const best = results.filter(item => !item.assisted && item.hints === 0).reduce((value, item) => Math.min(value, item.seconds), Infinity);
+  const average = results.length ? results.reduce((sum, item) => sum + item.seconds, 0) / results.length : null;
+  const { current, longest } = streakStats();
+  document.querySelector("#stats").textContent =
+    `${results.length} løst · ${current} dagers rekke · lengste ${longest} · beste ${Number.isFinite(best) ? timeText(best) : "—"} · snitt ${average == null ? "—" : timeText(average)} · ${stats.totalHints} hint brukt`;
+}
+
 function render() {
   const date = currentDate();
   dateInput.value = state.date;
-  challengeLabel.textContent = date.toLocaleDateString("en", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  document.querySelector("#challenge-label").textContent =
+    date.toLocaleDateString("nb-NO", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   renderBoard();
   renderTray();
-  document.querySelector("#progress").textContent = `${state.placements.length} / 8 placed`;
+  document.querySelector("#progress").textContent = `${state.placements.length} / ${PIECES.length} brikker`;
   updateTimer();
-  document.querySelector("#pause").textContent = state.paused ? "Resume timer" : "Pause timer";
-  document.querySelector("#stats").textContent = `${stats.completedDates.length} completed · Best: ${stats.bestSeconds == null ? "—" : `${Math.floor(stats.bestSeconds / 60)}:${String(stats.bestSeconds % 60).padStart(2, "0")}`}`;
+  document.querySelector("#pause").textContent = state.paused ? "Fortsett tiden" : "Pause tiden";
+  renderStats();
   persist();
 }
 
+function formattedElapsed(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainder = Math.floor(seconds % 60);
+  if (minutes === 0) return `${remainder} sekunder`;
+  return `${minutes} ${minutes === 1 ? "minutt" : "minutter"} og ${remainder} sekunder`;
+}
+
+function completeGame(assisted = state.assisted) {
+  if (state.completed || !validateComplete(state.placements, targetForDate(currentDate()), PIECES)) return false;
+  state.completed = true;
+  state.assisted = assisted;
+  state.paused = true;
+  tick = Date.now();
+  const previous = stats.completedDates.find(item => item.date === state.date);
+  const result = { date: state.date, seconds: state.elapsed, hints: state.hintsUsed, assisted };
+  const isUnassisted = !assisted && state.hintsUsed === 0;
+  const previousIsUnassisted = previous && !previous.assisted && previous.hints === 0;
+  if (!previous || (isUnassisted && !previousIsUnassisted)
+    || (isUnassisted === previousIsUnassisted && state.elapsed < previous.seconds)) {
+    if (previous) stats.completedDates.splice(stats.completedDates.indexOf(previous), 1);
+    stats.completedDates.push(result);
+  }
+  saveStats(stats);
+  document.querySelector("#victory").hidden = false;
+  document.querySelector("#victory-title").textContent = "Gratulerer! Du løste dagens utfordring!";
+  document.querySelector("#victory-details").textContent =
+    `Tiden din: ${formattedElapsed(state.elapsed)}.${assisted ? " Løsningen ble vist – denne runden teller som hjulpet." : state.hintsUsed ? ` Du brukte ${state.hintsUsed} hint.` : " Helt uten hint!"}`;
+  render();
+  setMessage(assisted ? "Puslespillet er løst med hjelp." : "Puslespillet er løst!", "success");
+  return true;
+}
+
 function tryPlace(pieceId, key) {
+  if (state.completed) return;
   const [x, y] = key.split(",").map(Number);
   const piece = pieceById.get(pieceId);
   const targets = targetForDate(currentDate());
   const occupied = new Set(state.placements.flatMap(item => item.cells));
-  const orientation = { rotation: selectedRotation };
+  const orientation = { rotation: state.rotation, flipX: state.flipX };
   if (!isLegalPlacement(piece, { x, y }, occupied, targets, orientation)) {
-    setMessage("That placement is not valid. Choose an uncovered, non-target square.", "error");
+    setMessage("Her får ikke brikken plass. Unngå målrutene og andre brikker.", "error");
+    board.querySelector(`[data-key="${key}"]`)?.classList.add("invalid");
+    window.setTimeout(() => board.querySelector(`[data-key="${key}"]`)?.classList.remove("invalid"), 320);
     return;
   }
   snapshot();
   const cells = placementCells(piece, { x, y }, orientation);
-  state.placements.push({ id: pieceId, origin: { x, y }, rotation: selectedRotation, cells });
+  state.placements.push({ id: pieceId, origin: { x, y }, rotation: state.rotation, flipX: state.flipX, cells });
   state.selected = null;
-  selectedRotation = 0;
+  state.rotation = 0;
+  state.flipX = false;
+  if (!state.started) tick = Date.now();
   state.started = true;
   render();
-  const totalArea = PIECES.reduce((sum, item) => sum + item.cells.length, 0);
-  if (state.placements.length === PIECES.length && validateComplete(state.placements, targets, PIECES)) {
-    state.paused = true;
-    tick = Date.now();
-    render();
-    setMessage("Puzzle complete! Great work.", "success");
-    if (!stats.completedDates.includes(state.date)) stats.completedDates.push(state.date);
-    stats.bestSeconds = stats.bestSeconds == null ? state.elapsed : Math.min(stats.bestSeconds, state.elapsed);
-    saveStats(stats);
-    document.querySelector("#stats").textContent = `${stats.completedDates.length} completed · Best: ${Math.floor(stats.bestSeconds / 60)}:${String(stats.bestSeconds % 60).padStart(2, "0")}`;
-  } else if (state.placements.length === PIECES.length) {
-    setMessage(`All pieces placed, but the board cannot be complete: the traced pieces cover ${totalArea} cells.`, "error");
+  if (state.placements.length === PIECES.length) {
+    if (!completeGame(state.assisted)) setMessage("Alle brikkene er lagt, men brettet stemmer ikke helt ennå.", "error");
   } else {
-    setMessage(`${piece.name} placed. Select a piece and choose its top-left board square.`);
+    setMessage(`${piece.name} plassert. Fortsett med neste brikke.`);
   }
 }
 
 function returnPiece(id) {
+  if (state.completed) return;
+  const item = state.placements.find(placement => placement.id === id);
   snapshot();
-  state.placements = state.placements.filter(item => item.id !== id);
+  state.placements = state.placements.filter(placement => placement.id !== id);
   state.selected = id;
-  selectedRotation = 0;
+  state.rotation = item.rotation;
+  state.flipX = item.flipX;
   render();
-  setMessage(`${pieceById.get(id).name} returned to the tray.`);
+  setMessage(`${pieceById.get(id).name} tilbake på brikkebrettet.`);
 }
 
 function rotate(direction) {
-  if (!state.selected) { setMessage("Select a piece in the tray first."); return; }
-  selectedRotation = (selectedRotation + direction + 4) % 4;
+  if (!state.selected || state.completed) { setMessage("Velg en brikke først."); return; }
+  state.rotation = (state.rotation + direction + 4) % 4;
+  renderTray();
+}
+
+function flip() {
+  if (!state.selected || state.completed) { setMessage("Velg en brikke først."); return; }
+  state.flipX = !state.flipX;
   renderTray();
 }
 
 dateInput.addEventListener("change", () => {
   const value = dateInput.value;
-  if (!value) return;
-  const [year, month, day] = value.split("-").map(Number);
-  const check = new Date(year, month - 1, day);
-  if (check.getFullYear() !== year || check.getMonth() !== month - 1 || check.getDate() !== day) {
-    setMessage("Choose a valid calendar date.", "error");
-    return;
-  }
+  if (!isValidDateString(value)) { setMessage("Velg en gyldig dato.", "error"); return; }
   state.date = value;
   state.placements = [];
   state.history = [];
   state.elapsed = 0;
   state.paused = false;
   state.started = false;
+  state.hintsUsed = 0;
+  state.assisted = false;
+  state.completed = false;
   state.selected = null;
-  selectedRotation = 0;
-  setMessage("New date selected. Arrange the pieces around its three markers.");
+  state.rotation = 0;
+  state.flipX = false;
+  state.hintPiece = null;
+  document.querySelector("#victory").hidden = true;
+  tick = Date.now();
+  setMessage("Ny dato valgt. Plasser brikkene rundt dagens tre felter.");
   render();
 });
 
 tray.addEventListener("click", event => {
   const button = event.target.closest("[data-piece]");
-  if (!button) return;
+  if (!button || state.completed || state.placements.some(item => item.id === button.dataset.piece)) return;
   state.selected = button.dataset.piece;
-  selectedRotation = 0;
-  state.started = true;
-  tick = Date.now();
+  state.rotation = 0;
+  state.flipX = false;
   persist();
   renderTray();
-  setMessage(`${pieceById.get(state.selected).name} selected. Tap a board square to place it.`);
+  setMessage(`${pieceById.get(state.selected).name} valgt. Trykk på en rute på brettet.`);
 });
 
 board.addEventListener("click", event => {
   const cell = event.target.closest("[data-key]");
   if (!cell?.dataset.key) return;
-  const placed = state.placements.find(item => item.cells.includes(cell.dataset.key));
-  if (placed) { returnPiece(placed.id); return; }
-  if (state.selected) tryPlace(state.selected, cell.dataset.key);
+  if (state.selected) { tryPlace(state.selected, cell.dataset.key); return; }
+  const placement = state.placements.find(item => item.cells.includes(cell.dataset.key));
+  if (placement) { returnPiece(placement.id); return; }
 });
 
 tray.addEventListener("dragstart", event => {
   const button = event.target.closest("[data-piece]");
-  if (!button) return;
+  if (!button || state.completed) return;
   dragId = button.dataset.piece;
-  state.selected = dragId;
-  selectedRotation = 0;
+  if (state.selected !== dragId) {
+    state.selected = dragId;
+    state.rotation = 0;
+    state.flipX = false;
+  }
   event.dataTransfer.setData("text/plain", dragId);
   event.dataTransfer.effectAllowed = "move";
 });
@@ -268,89 +366,153 @@ board.addEventListener("drop", event => {
 
 document.querySelector("#rotate-cw").addEventListener("click", () => rotate(1));
 document.querySelector("#rotate-ccw").addEventListener("click", () => rotate(3));
+document.querySelector("#flip").addEventListener("click", flip);
 document.querySelector("#undo").addEventListener("click", () => {
+  if (state.completed) return;
   const previous = state.history.pop();
-  if (!previous) { setMessage("Nothing to undo."); return; }
+  if (!previous) { setMessage("Ingenting å angre ennå."); return; }
   state.placements = JSON.parse(previous);
+  state.selected = null;
+  document.querySelector("#victory").hidden = true;
   render();
-  setMessage("Last placement undone.");
+  setMessage("Siste trekk angret.");
 });
 document.querySelector("#reset").addEventListener("click", () => {
   snapshot();
   state.placements = [];
   state.selected = null;
-  state.history = [];
+  state.rotation = 0;
+  state.flipX = false;
   state.elapsed = 0;
   state.started = false;
   state.paused = false;
-  state.hints = 0;
+  state.hintsUsed = 0;
+  state.assisted = false;
+  state.completed = false;
+  state.hintPiece = null;
+  state.history = [];
+  document.querySelector("#victory").hidden = true;
+  tick = Date.now();
   render();
-  setMessage("Puzzle reset.");
+  setMessage("Puslespillet er nullstilt.");
 });
+
 document.querySelector("#hint").addEventListener("click", () => {
-  state.hints++;
+  if (state.completed) return;
   const result = solve(PIECES, targetForDate(currentDate()), state.placements);
   if (!result.ok) {
-    setMessage(`No verified hint is available: ${result.reason}`, "error");
+    setMessage(`Ingen gyldig løsning fra dagens plassering. Prøv å flytte eller angre en brikke. ${result.reason}`, "error");
     return;
   }
   const next = result.placements.find(item => !state.placements.some(placed => placed.id === item.id));
-  if (state.hints === 1) setMessage(`Hint: ${pieceById.get(next.id).name} fits somewhere near ${next.cells[0]}.`);
-  else if (state.hints === 2) {
+  if (!next) return;
+  state.hintsUsed++;
+  stats.totalHints++;
+  saveStats(stats);
+  renderStats();
+  state.hintPiece = next.id;
+  board.querySelectorAll(".hint, .hint-area, .hint-solution").forEach(cell =>
+    cell.classList.remove("hint", "hint-area", "hint-solution"),
+  );
+  if (state.hintsUsed % 3 === 1) {
     board.querySelectorAll(".hint").forEach(cell => cell.classList.remove("hint"));
+    next.cells.forEach(key => board.querySelector(`[data-key="${key}"]`)?.classList.add("hint-area"));
+    setMessage("Hint: Se etter plass til en brikke i det markerte området.");
+  } else if (state.hintsUsed % 3 === 2) {
     next.cells.forEach(key => board.querySelector(`[data-key="${key}"]`)?.classList.add("hint"));
-    setMessage(`Try placing ${pieceById.get(next.id).name} in the highlighted area.`);
+    renderTray();
+    setMessage(`Prøv brikken «${pieceById.get(next.id).name}» i det markerte området.`);
   } else {
-    board.querySelectorAll(".hint").forEach(cell => cell.classList.remove("hint"));
-    next.cells.forEach(key => board.querySelector(`[data-key="${key}"]`)?.classList.add("hint", "hint-solution"));
-    setMessage(`Place ${pieceById.get(next.id).name} at ${next.origin.x + 1}, ${next.origin.y + 1}; orientation ${next.rotation * 90}°.`);
+    next.cells.forEach(key => board.querySelector(`[data-key="${key}"]`)?.classList.add("hint-solution"));
+    setMessage(`«${pieceById.get(next.id).name}»: start i rad ${next.origin.y + 1}, kolonne ${next.origin.x + 1}; roter ${next.rotation * 90}°${next.flipX ? " og vend brikken" : ""}.`);
   }
+  persist();
 });
+
 document.querySelector("#solution").addEventListener("click", () => {
-  if (!window.confirm("Showing a solution ends this attempt. Continue?")) return;
-  const result = solve(PIECES, targetForDate(currentDate()), []);
-  if (!result.ok || !validateComplete(result.placements, targetForDate(currentDate()), PIECES)) {
-    setMessage(`No verified solution is available: ${result.reason || "The solver result failed validation."}`, "error");
+  if (state.completed || !window.confirm("Vil du vise hele løsningen? Denne runden blir registrert som hjulpet.")) return;
+  const targets = targetForDate(currentDate());
+  const result = solve(PIECES, targets);
+  if (!result.ok || !validateComplete(result.placements, targets, PIECES)) {
+    setMessage(`Fant ingen validert løsning: ${result.reason || "Løsningen bestod ikke kontrollen."}`, "error");
     return;
   }
   state.placements = result.placements;
   state.selected = null;
-  state.hints++;
-  state.paused = true;
-  tick = Date.now();
-  render();
-  setMessage("Verified solution shown. This attempt was solved with assistance.", "success");
+  state.assisted = true;
+  renderBoard();
+  renderTray();
+  completeGame(true);
 });
+
 document.querySelector("#pause").addEventListener("click", () => {
+  if (state.completed) return;
   state.paused = !state.paused;
   tick = Date.now();
   render();
 });
-document.addEventListener("keydown", event => {
-  if (event.target.matches("input")) return;
-  if (event.key.toLowerCase() === "r") { rotate(event.shiftKey ? 3 : 1); }
-  if (event.key === "Escape" && state.selected) {
-    state.selected = null;
-    selectedRotation = 0;
-    renderTray();
-    setMessage("Piece selection cleared.");
+
+async function copyResult(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch { /* Continue with the selection-based fallback when clipboard permission is denied. */ }
+  const input = document.createElement("textarea");
+  input.value = text;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.append(input);
+  input.select();
+  const copied = document.execCommand("copy");
+  input.remove();
+  return copied;
+}
+
+document.querySelector("#share").addEventListener("click", async () => {
+  const marker = state.assisted ? "Løst med hjelp." : state.hintsUsed ? `Løst med ${state.hintsUsed} hint.` : "Løst uten hint!";
+  const text = `🧩 Dagens utfordring – Papers United\n\n📅 ${currentDate().toLocaleDateString("nb-NO", { day: "numeric", month: "long", year: "numeric" })}\n⏱️ Tid: ${timeText(state.elapsed)}\n🏆 ${marker}\n\nKlarer du å slå tiden min?\n\nhttps://papersunited.com/puzzle-a-day/`;
+  try {
+    if (navigator.share) await navigator.share({ title: "Dagens utfordring – Papers United", text });
+    else {
+      const copied = await copyResult(text);
+      setMessage(copied ? "Resultatet er kopiert. Del det med en venn!" : "Nettleseren støtter ikke deling eller kopiering.", copied ? "success" : "error");
+    }
+  } catch (error) {
+    if (error.name !== "AbortError") setMessage("Kunne ikke dele resultatet. Prøv å kopiere lenken.", "error");
   }
 });
 
-setInterval(() => {
-  if (!state.paused && state.started) {
+document.addEventListener("keydown", event => {
+  if (event.target.matches("input, textarea")) return;
+  if (event.key.toLowerCase() === "r") rotate(event.shiftKey ? 3 : 1);
+  if (event.key.toLowerCase() === "f") flip();
+  if (event.key === "Escape" && state.selected) {
+    state.selected = null;
+    state.rotation = 0;
+    state.flipX = false;
+    renderTray();
+    setMessage("Brikkevalg fjernet.");
+  }
+});
+
+window.setInterval(() => {
+  if (!state.paused && !state.completed && state.started && !document.hidden) {
     const now = Date.now();
     state.elapsed += Math.max(0, (now - tick) / 1000);
     tick = now;
     updateTimer();
     persist();
   }
-}, 1000);
+}, 500);
 document.addEventListener("visibilitychange", () => { tick = Date.now(); });
 
-document.querySelector("#geometry-warning").textContent = PIECE_GEOMETRY_VERIFIED
-  ? ""
-  : `Geometry check needed: the supplied photo can only be traced to ${PIECES.reduce((sum, piece) => sum + piece.cells.length, 0)} squares, but the brief requires 49 piece cells. The provided board rows list ${CELLS.length} cells, not 52. Rotation and placement controls work, but completion, hints and solutions are blocked by this mismatch.`;
-
+document.querySelector("#victory").hidden = !state.completed;
+if (state.completed) {
+  document.querySelector("#victory-title").textContent = "Gratulerer! Du løste dagens utfordring!";
+  document.querySelector("#victory-details").textContent = `Tiden din: ${formattedElapsed(state.elapsed)}.${state.assisted ? " Løsningen ble vist – denne runden teller som hjulpet." : " Flott jobbet!"}`;
+}
 render();
-if (saved) setMessage("Saved puzzle restored. Check placements or reset to start over.");
+if (saved) setMessage("Spillet er hentet fra der du slapp.");
