@@ -2,6 +2,7 @@ import { CELLS, ROWS, targetForDate } from "./board.js";
 import { PIECES } from "./pieces.js";
 import { isLegalPlacement, placementCells, solve, transform, validateComplete } from "./logic.js";
 import { loadGame, loadStats, saveGame, saveStats } from "./storage.js";
+import { placementPreview, renderGhost } from "./preview.js";
 
 const board = document.querySelector("#board");
 const tray = document.querySelector("#tray");
@@ -266,16 +267,16 @@ function tryPlace(pieceId, key) {
   const [x, y] = key.split(",").map(Number);
   const piece = pieceById.get(pieceId);
   const targets = targetForDate(currentDate());
-  const occupied = new Set(state.placements.filter(item => item.id !== pieceId).flatMap(item => item.cells));
   const orientation = { rotation: state.rotation, flipX: state.flipX };
-  if (!isLegalPlacement(piece, { x, y }, occupied, targets, orientation)) {
+  const candidate = placementPreview(piece, { x, y }, orientation, state.placements, targets);
+  if (!candidate.valid) {
     setMessage("Her får ikke brikken plass. Unngå målrutene og andre brikker.", "error");
     board.querySelector(`[data-key="${key}"]`)?.classList.add("invalid");
     window.setTimeout(() => board.querySelector(`[data-key="${key}"]`)?.classList.remove("invalid"), 320);
     return false;
   }
   snapshot();
-  const cells = placementCells(piece, { x, y }, orientation);
+  const cells = candidate.cells;
   state.placements = state.placements.filter(item => item.id !== pieceId);
   state.placements.push({ id: pieceId, origin: { x, y }, rotation: state.rotation, flipX: state.flipX, cells });
   state.selected = null;
@@ -337,33 +338,23 @@ function drawPreview(announce = false) {
   if (!previewOrigin || !state.selected || state.completed) return;
   const piece = pieceById.get(state.selected);
   const orientation = { rotation: state.rotation, flipX: state.flipX };
-  const occupied = new Set(state.placements.filter(item => item.id !== piece.id).flatMap(item => item.cells));
-  const valid = isLegalPlacement(piece, previewOrigin, occupied, targetForDate(currentDate()), orientation);
+  const candidate = placementPreview(piece, previewOrigin, orientation, state.placements, targetForDate(currentDate()));
+  const { valid, cells } = candidate;
   previewLayer.classList.toggle("invalid-preview", !valid);
   const first = board.querySelector(".cell").getBoundingClientRect();
   const second = board.querySelectorAll(".cell")[1].getBoundingClientRect();
   const below = board.querySelectorAll(".cell")[7].getBoundingClientRect();
   const stepX = second.left - first.left;
   const stepY = below.top - first.top;
-  const cells = placementCells(piece, previewOrigin, orientation);
-  for (const key of cells) {
-    const [x, y] = key.split(",").map(Number);
-    const square = document.createElement("span");
-    square.className = "preview-square";
-    square.dataset.key = key;
-    square.style.left = `${x * stepX}px`;
-    square.style.top = `${y * stepY}px`;
-    square.style.width = `${first.width}px`;
-    square.style.height = `${first.height}px`;
-    previewLayer.append(square);
-  }
-  const anchor = document.createElement("span");
-  anchor.className = "preview-anchor";
-  anchor.style.left = `${(previewOrigin.x + previewAnchor[0]) * stepX}px`;
-  anchor.style.top = `${(previewOrigin.y + previewAnchor[1]) * stepY}px`;
-  anchor.style.width = `${first.width}px`;
-  anchor.style.height = `${first.height}px`;
-  previewLayer.append(anchor);
+  const boardRect = board.getBoundingClientRect();
+  renderGhost(previewLayer, candidate, previewOrigin, previewAnchor, {
+    width: boardRect.width,
+    height: boardRect.height,
+    cellWidth: first.width,
+    cellHeight: first.height,
+    stepX,
+    stepY,
+  });
   previewStatus.classList.toggle("invalid-preview", !valid);
   const outside = cells.some(key => {
     const [x, y] = key.split(",").map(Number);
@@ -583,7 +574,14 @@ function finishDrag(commit) {
 }
 
 window.addEventListener("pointerup", event => {
-  if (drag?.pointerId === event.pointerId) finishDrag(true);
+  if (drag?.pointerId === event.pointerId) {
+    if (drag.active) {
+      drag.clientX = event.clientX;
+      drag.clientY = event.clientY;
+      updateDragPosition();
+    }
+    finishDrag(true);
+  }
 });
 window.addEventListener("pointercancel", event => {
   if (drag?.pointerId === event.pointerId) finishDrag(false);

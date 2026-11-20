@@ -15,8 +15,8 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Dagens utfordring – Papers United">
     <meta name="twitter:description" content="Klarer du dagens kalenderpuslespill? Prøv dagens utfordring.">
-    <link rel="stylesheet" href="puzzle.css">
-    <script type="module" src="app.js"></script>
+    <link rel="stylesheet" href="puzzle.css?v=svg-ghost-1">
+    <script type="module" src="app.js?v=svg-ghost-1"></script>
     <title>Dagens utfordring – Papers United</title>
   </head>
   <body>
@@ -37,7 +37,7 @@
       <section class="game-layout" aria-label="Kalenderpuslespill">
         <div class="board-panel">
           <div class="section-heading"><div><p class="eyebrow">DAGENS KALENDER</p><h2 id="challenge-label"></h2></div><span class="pill" id="progress">0 / 10 brikker</span></div>
-          <div class="board-wrap"><div id="board" class="board" role="group" aria-label="Kalenderbrett"></div><div id="placement-preview" class="placement-preview" aria-hidden="true"></div></div>
+          <div class="board-wrap"><div id="board" class="board" role="group" aria-label="Kalenderbrett"></div><svg id="placement-preview" class="placement-preview" aria-hidden="true" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"></svg></div>
           <p id="preview-status" class="preview-status" role="status" aria-live="polite"></p>
           <div class="status-row"><p id="message" role="status" aria-live="polite"></p><p>Tid <strong id="timer">00:00</strong></p></div>
           <section class="victory" id="victory" aria-live="polite" hidden>

@@ -30,7 +30,32 @@ async function solution(page) {
 }
 
 async function preview(page) {
-  return page.locator(".preview-square").evaluateAll(nodes => nodes.map(node => node.dataset.key).sort());
+  return page.locator(".preview-square").evaluateAll(nodes => {
+    const layer = document.querySelector("#placement-preview");
+    const layerStyle = getComputedStyle(layer);
+    const first = document.querySelector("#board .cell").getBoundingClientRect();
+    const cells = document.querySelectorAll("#board .cell");
+    const stepX = cells[1].getBoundingClientRect().left - first.left;
+    const stepY = cells[7].getBoundingClientRect().top - first.top;
+    const valid = !layer.classList.contains("invalid-preview");
+    for (const node of nodes) {
+      const style = getComputedStyle(node);
+      const rect = node.getBoundingClientRect();
+      const [x, y] = node.dataset.key.split(",").map(Number);
+      if (layer.tagName.toLowerCase() !== "svg" || layerStyle.pointerEvents !== "none"
+        || layerStyle.overflow !== "visible" || Number(layerStyle.zIndex) < 1
+        || style.visibility !== "visible" || style.display === "none" || Number(style.opacity) <= 0
+        || Number(style.fillOpacity) <= 0 || Number(style.fillOpacity) >= 1
+        || style.fill !== (valid ? "rgb(54, 164, 107)" : "rgb(226, 75, 62)")
+        || Math.abs(rect.x - (first.left + x * stepX + 1.5)) > 0.5
+        || Math.abs(rect.y - (first.top + y * stepY + 1.5)) > 0.5
+        || Math.abs(rect.width - (first.width - 3)) > 0.5
+        || Math.abs(rect.height - (first.height - 3)) > 0.5) {
+        throw new Error(`Ghost cell ${node.dataset.key} is not visibly styled or aligned with the board`);
+      }
+    }
+    return nodes.map(node => node.dataset.key).sort();
+  });
 }
 
 async function occupied(page) {

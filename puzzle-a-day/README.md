@@ -18,6 +18,10 @@ node --test puzzle-a-day/test/*.test.js
 
 For nettlesertesten, start lokalserveren på port 8765 og sett `PLAYWRIGHT_CORE` til absolutt sti til en lokal installasjon av `playwright-core/index.mjs`. Kjør `node puzzle-a-day/test/browser.mjs`. `CHROME_PATH` kan angi en annen Chrome-binær, og `PUZZLE_URL` en annen lokal adresse. Testen bruker isolerte nettleserkontekster.
 
+Testene uten server kontrollerer også hele SVG-avtrykket, farger, gjennomsiktighet, festepunkt, ugyldige plasseringer og koordinater etter rotasjon og speiling. Nettlesertesten kontrollerer beregnede stiler og skjermkoordinater for alle forhåndsvisningsrutene, ikke bare interne koordinatnøkler.
+
+SVG-endringen er ikke visuelt nettlesertestet i denne økten: ingen server eller nettleser ble startet. Test musepeking uten knappetrykk, dragging og berøring lokalt før publisering. Den opprinnelige usynligheten kunne ikke bekreftes uten nettleserkjøring.
+
 ## Brett og brikker
 
 `board.js` beskriver brettet som åtte rader med sju kolonner. De 50 spillbare rutene er 12 måneder, 31 datoer og 7 ukedager. Datoens tre mål beregnes fra nettleserens lokale kalenderdato.
@@ -30,6 +34,8 @@ For nettlesertesten, start lokalserveren på port 8765 og sett `PLAYWRIGHT_CORE`
 
 Velg en brikke og pek på brettet for å se plasseringen før du klikker. På berøringsskjerm trykker du på en rute for å forhåndsvise og igjen for å plassere. Grønt/✓ betyr gyldig, rødt/✕ betyr ugyldig, og ⊕ markerer festepunktet. Brikker kan også dras fra brikkefigurene eller fra brettet; på berøringsskjerm vises forhåndsvisningen litt over fingeren. Rull siden ved å starte sveip utenfor disse drasonene: nettleseren må reservere berøringen på dem for dragging. Dra utenfor brettet for å avbryte. Flytting av en plassert brikke kan angres i ett trekk. Bruk knappene eller `R` / `Shift+R` for å rotere, `F` for å speile og `Esc` eller «Avbryt valg» for å velge bort. Trykk på en plassert brikke uten å ha valgt en annen for å ta den tilbake. Med tastatur velger du en brikke, går til en brettcelle med Tab og trykker Enter for å plassere.
 
+Forhåndsvisningen tegnes som SVG over brettet, uten å fange pekerhendelser. Alle ruter har eksplisitte SVG-attributter for geometri, grønn/rød fyllfarge og gjennomsiktighet; ugyldige ruter har også stiplet omriss. `preview.js` bruker samme plasseringsberegning og validering for forhåndsvisning og faktisk plassering. Festepunkt og berøringsforskyvning beholdes under dragging, og slippkoordinatene oppdateres før plassering.
+
 Hint bruker solverens løsning for gjeldende plassering. «Vis løsning» krever bekreftelse og markerer runden som hjulpet. Deling bruker Web Share API når tilgjengelig, ellers utklippstavle med reserve for eldre nettlesere.
 
 Spilltilstand og statistikk lagres lokalt i nettleseren under separate, versjonerte nøkler (`v2`). Eldre spilltilstand fra prototypen gjenopprettes ikke. Statistikken teller én beste fullføring per kalenderdato. Rekke og personlig rekord teller bare fullføringer uten hint eller løsningsvisning; gjennomsnitt og fullførte datoer inkluderer også hjulpne runder. Nettleserlagring som mangler, er ugyldig eller utilgjengelig gir en tom, spillbar økt.
@@ -39,8 +45,8 @@ Spilltilstand og statistikk lagres lokalt i nettleseren under separate, versjone
 - Brettdata: `board.js`
 - Brikkedata: `pieces.js`
 - Regler og solver: `logic.js`
-- Grensesnitt og spillflyt: `app.js`, `index.html`, `puzzle.css`
+- Grensesnitt og spillflyt: `app.js`, `preview.js`, `index.html`, `puzzle.css`
 - Lokal lagring: `storage.js`
-- Automatiserte tester: `test/game.test.js`
+- Automatiserte tester: `test/game.test.js`, `test/preview.test.js`, `test/browser.mjs`
 
 Søkekjøringen for de testede datoene er kort nok til å kjøre synkront uten å fryse grensesnittet; hvis brikkesettet utvides, vurder Web Worker og tidsavbrudd. Ingen kjente blokkeringer for de validerte datoene. Ingen serverbaserte resultattavler eller synkronisering mellom enheter.
