@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="nb">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Klarer du dagens kalenderpuslespill? Plasser brikkene rundt dagens måned, dato og ukedag i Dagens utfordring fra Papers United.">
+    <meta name="theme-color" content="#f6f5f0">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+    <link rel="canonical" href="https://papersunited.com/puzzle-a-day/">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://papersunited.com/puzzle-a-day/">
+    <meta property="og:title" content="Dagens utfordring – Papers United">
+    <meta property="og:description" content="Klarer du dagens kalenderpuslespill? Plasser brikkene rundt dagens måned, dato og ukedag.">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Dagens utfordring – Papers United">
+    <meta name="twitter:description" content="Klarer du dagens kalenderpuslespill? Prøv dagens utfordring.">
+    <link rel="stylesheet" href="puzzle.css?v=svg-ghost-1">
+    <script type="module" src="app.js?v=svg-ghost-1"></script>
+    <title>Dagens utfordring – Papers United</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#game">Hopp til puslespillet</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Papers United hjem"><span class="brand-mark" aria-hidden="true">p<span>u</span></span><span>Papers<span class="brand-light">United</span><small>NORSKE PERSPEKTIVER. SAMLET.</small></span></a>
+      <nav aria-label="Hovedmeny"><a href="../">← Til Papers United</a></nav>
+    </header>
+    <main id="game">
+      <section class="intro">
+        <p class="eyebrow">EN LITEN DAGLIG UTFORDRING</p>
+        <h1>Dagens <em>utfordring</em></h1>
+        <h2>Klarer du dagens kalenderpuslespill?</h2>
+        <p>Plasser alle brikkene slik at bare dagens måned, dato og ukedag er synlige.</p>
+        <p class="date-picker"><label for="challenge-date">Velg en dato</label><input id="challenge-date" type="date"></p>
+      </section>
+
+      <section class="game-layout" aria-label="Kalenderpuslespill">
+        <div class="board-panel">
+          <div class="section-heading"><div><p class="eyebrow">DAGENS KALENDER</p><h2 id="challenge-label"></h2></div><span class="pill" id="progress">0 / 10 brikker</span></div>
+          <div class="board-wrap"><div id="board" class="board" role="group" aria-label="Kalenderbrett"></div><svg id="placement-preview" class="placement-preview" aria-hidden="true" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"></svg></div>
+          <p id="preview-status" class="preview-status" role="status" aria-live="polite"></p>
+          <div class="status-row"><p id="message" role="status" aria-live="polite"></p><p>Tid <strong id="timer">00:00</strong></p></div>
+          <section class="victory" id="victory" aria-live="polite" hidden>
+            <h2 id="victory-title"></h2>
+            <p id="victory-details"></p>
+            <button type="button" id="share">Del resultatet</button>
+          </section>
+          <div class="controls" aria-label="Spillkontroller">
+            <button type="button" id="rotate-ccw" aria-label="Roter valgt brikke mot klokken">↶ Roter</button>
+            <button type="button" id="rotate-cw" aria-label="Roter valgt brikke med klokken">Roter ↻</button>
+            <button type="button" id="flip" aria-label="Vend valgt brikke">Vend brikke ↔</button>
+            <button type="button" id="cancel-placement">Avbryt valg</button>
+            <button type="button" id="undo">Angre</button>
+            <button type="button" id="hint">Hint</button>
+            <button type="button" id="solution">Vis løsning</button>
+            <button type="button" id="pause">Pause tiden</button>
+            <button type="button" id="reset">Start på nytt</button>
+          </div>
+        </div>
+
+        <aside class="tray-panel">
+          <div class="section-heading"><div><p class="eyebrow">BRIKKENE</p><h2>Brikkebrett</h2></div></div>
+          <p class="instructions">Velg en brikke og pek på en rute for å se plasseringen. Trykk på ruten for å legge den; på berøringsskjerm trykker du to ganger. Dra brikken eller en plassert rute for å flytte. Rotér med knappene eller <kbd>R</kbd> / <kbd>⇧</kbd>+<kbd>R</kbd>, vend med <kbd>F</kbd>, og avbryt med knappen eller <kbd>Esc</kbd>. Tastatur: velg brikke, gå til brettet med Tab og trykk Enter.</p>
+          <div id="tray" class="tray" aria-label="Brikker som ikke er plassert"></div>
+          <section class="stats-panel" aria-labelledby="stats-title">
+            <h3 id="stats-title">Din statistikk</h3>
+            <p id="stats"></p>
+          </section>
+        </aside>
+      </section>
+    </main>
+    <footer><a href="../">Papers United</a><span>En liten utfordring, rett i nettleseren.</span></footer>
+  </body>
+</html>
