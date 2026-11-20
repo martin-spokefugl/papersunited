@@ -16,6 +16,8 @@ python3 -m http.server 8000
 node --test puzzle-a-day/test/*.test.js
 ```
 
+For nettlesertesten, start lokalserveren på port 8765 og sett `PLAYWRIGHT_CORE` til absolutt sti til en lokal installasjon av `playwright-core/index.mjs`. Kjør `node puzzle-a-day/test/browser.mjs`. `CHROME_PATH` kan angi en annen Chrome-binær, og `PUZZLE_URL` en annen lokal adresse. Testen bruker isolerte nettleserkontekster.
+
 ## Brett og brikker
 
 `board.js` beskriver brettet som åtte rader med sju kolonner. De 50 spillbare rutene er 12 måneder, 31 datoer og 7 ukedager. Datoens tre mål beregnes fra nettleserens lokale kalenderdato.
@@ -26,7 +28,7 @@ node --test puzzle-a-day/test/*.test.js
 
 ## Spill, lagring og statistikk
 
-Velg en brikke og trykk på brettet; på datamaskin kan brikken også dras. Bruk knappene eller `R` / `Shift+R` for å rotere, `F` for å speile og `Esc` for å velge bort. Trykk på en plassert brikke for å ta den tilbake. Det er alltid mulig å nullstille eller angre plasseringer.
+Velg en brikke og pek på brettet for å se plasseringen før du klikker. På berøringsskjerm trykker du på en rute for å forhåndsvise og igjen for å plassere. Grønt/✓ betyr gyldig, rødt/✕ betyr ugyldig, og ⊕ markerer festepunktet. Brikker kan også dras fra brikkefigurene eller fra brettet; på berøringsskjerm vises forhåndsvisningen litt over fingeren. Dra utenfor brettet for å avbryte. Flytting av en plassert brikke kan angres i ett trekk. Bruk knappene eller `R` / `Shift+R` for å rotere, `F` for å speile og `Esc` eller «Avbryt valg» for å velge bort. Trykk på en plassert brikke uten å ha valgt en annen for å ta den tilbake. Med tastatur velger du en brikke, går til en brettcelle med Tab og trykker Enter for å plassere.
 
 Hint bruker solverens løsning for gjeldende plassering. «Vis løsning» krever bekreftelse og markerer runden som hjulpet. Deling bruker Web Share API når tilgjengelig, ellers utklippstavle med reserve for eldre nettlesere.
 

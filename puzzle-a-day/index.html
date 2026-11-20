@@ -37,7 +37,8 @@
       <section class="game-layout" aria-label="Kalenderpuslespill">
         <div class="board-panel">
           <div class="section-heading"><div><p class="eyebrow">DAGENS KALENDER</p><h2 id="challenge-label"></h2></div><span class="pill" id="progress">0 / 10 brikker</span></div>
-          <div id="board" class="board" role="group" aria-label="Kalenderbrett"></div>
+          <div class="board-wrap"><div id="board" class="board" role="group" aria-label="Kalenderbrett"></div><div id="placement-preview" class="placement-preview" aria-hidden="true"></div></div>
+          <p id="preview-status" class="preview-status" role="status" aria-live="polite"></p>
           <div class="status-row"><p id="message" role="status" aria-live="polite"></p><p>Tid <strong id="timer">00:00</strong></p></div>
           <section class="victory" id="victory" aria-live="polite" hidden>
             <h2 id="victory-title"></h2>
@@ -48,6 +49,7 @@
             <button type="button" id="rotate-ccw" aria-label="Roter valgt brikke mot klokken">↶ Roter</button>
             <button type="button" id="rotate-cw" aria-label="Roter valgt brikke med klokken">Roter ↻</button>
             <button type="button" id="flip" aria-label="Vend valgt brikke">Vend brikke ↔</button>
+            <button type="button" id="cancel-placement">Avbryt valg</button>
             <button type="button" id="undo">Angre</button>
             <button type="button" id="hint">Hint</button>
             <button type="button" id="solution">Vis løsning</button>
@@ -58,7 +60,7 @@
 
         <aside class="tray-panel">
           <div class="section-heading"><div><p class="eyebrow">BRIKKENE</p><h2>Brikkebrett</h2></div></div>
-          <p class="instructions">Velg en brikke og trykk på brettet for å plassere den. På datamaskin kan du også dra brikken. Roter med knappene eller <kbd>R</kbd> / <kbd>⇧</kbd>+<kbd>R</kbd>, vend med <kbd>F</kbd>, og trykk <kbd>Esc</kbd> for å velge bort.</p>
+          <p class="instructions">Velg en brikke og pek på en rute for å se plasseringen. Trykk på ruten for å legge den; på berøringsskjerm trykker du to ganger. Dra brikken eller en plassert rute for å flytte. Rotér med knappene eller <kbd>R</kbd> / <kbd>⇧</kbd>+<kbd>R</kbd>, vend med <kbd>F</kbd>, og avbryt med knappen eller <kbd>Esc</kbd>. Tastatur: velg brikke, gå til brettet med Tab og trykk Enter.</p>
           <div id="tray" class="tray" aria-label="Brikker som ikke er plassert"></div>
           <section class="stats-panel" aria-labelledby="stats-title">
             <h3 id="stats-title">Din statistikk</h3>
