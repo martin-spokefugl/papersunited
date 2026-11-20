@@ -412,6 +412,7 @@ function cancelSelection() {
 dateInput.addEventListener("change", () => {
   const value = dateInput.value;
   if (!isValidDateString(value)) { setMessage("Velg en gyldig dato.", "error"); return; }
+  if (drag) finishDrag(false);
   state.date = value;
   state.placements = [];
   state.history = [];
@@ -587,6 +588,9 @@ window.addEventListener("pointerup", event => {
 window.addEventListener("pointercancel", event => {
   if (drag?.pointerId === event.pointerId) finishDrag(false);
 });
+window.addEventListener("lostpointercapture", event => {
+  if (drag?.pointerId === event.pointerId && event.target === drag.capture) finishDrag(false);
+});
 window.addEventListener("blur", () => { if (drag) finishDrag(false); });
 window.addEventListener("resize", () => drawPreview());
 
@@ -595,6 +599,7 @@ document.querySelector("#rotate-ccw").addEventListener("click", () => rotate(3))
 document.querySelector("#flip").addEventListener("click", flip);
 document.querySelector("#cancel-placement").addEventListener("click", cancelSelection);
 document.querySelector("#undo").addEventListener("click", () => {
+  if (drag) finishDrag(false);
   if (state.completed) return;
   const previous = state.history.pop();
   if (!previous) { setMessage("Ingenting å angre ennå."); return; }
@@ -606,6 +611,7 @@ document.querySelector("#undo").addEventListener("click", () => {
   setMessage("Siste trekk angret.");
 });
 document.querySelector("#reset").addEventListener("click", () => {
+  if (drag) finishDrag(false);
   snapshot();
   state.placements = [];
   state.selected = null;
@@ -659,6 +665,7 @@ document.querySelector("#hint").addEventListener("click", () => {
 });
 
 document.querySelector("#solution").addEventListener("click", () => {
+  if (drag) finishDrag(false);
   if (state.completed || !window.confirm("Vil du vise hele løsningen? Denne runden blir registrert som hjulpet.")) return;
   const targets = targetForDate(currentDate());
   const result = solve(PIECES, targets);
