@@ -106,3 +106,115 @@ footer a { color: var(--ink); font-weight: 700; }
 @keyframes nudge { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 @keyframes appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .cell.invalid, .victory { animation: none; } }
+
+
+/* Privacy notice and consent controls */
+.privacy-information {
+  max-width: 1296px;
+  margin: 0 auto;
+  border-top: 1px solid #dddfd7;
+  padding: 25px 5%;
+}
+
+.privacy-information h2 {
+  font: 500 22px Georgia, serif;
+  margin: 0 0 10px;
+}
+
+.privacy-information p {
+  max-width: 850px;
+  color: #657174;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+#privacy-settings {
+  background: transparent;
+  border: 0;
+  color: #275e54;
+  padding: 8px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.consent-banner {
+  position: fixed;
+  z-index: 100;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  max-width: 850px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px;
+  background: #fffefa;
+  color: #202e32;
+  border: 1px solid #dddfd7;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px #202e3230;
+}
+
+.consent-banner strong {
+  font-size: 14px;
+}
+
+.consent-banner p {
+  margin: 7px 0 0;
+  color: #657174;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.consent-banner a {
+  color: #275e54;
+  text-decoration: underline;
+}
+
+.consent-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.consent-actions button {
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: 1px solid #275e54;
+  background: transparent;
+  color: #275e54;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.consent-actions #consent-accept {
+  background: #275e54;
+  color: white;
+}
+
+@media (max-width: 700px) {
+  .consent-banner {
+    flex-direction: column;
+    align-items: stretch;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    padding: 16px;
+  }
+
+  .consent-actions button {
+    flex: 1;
+  }
+
+  .privacy-information {
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+}
+/* Ensure hidden elements stay hidden */
+[hidden] {
+  display: none !important;
+}

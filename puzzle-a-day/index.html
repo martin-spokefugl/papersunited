@@ -6,7 +6,7 @@
     <meta name="description" content="Klarer du dagens kalenderpuslespill? Plasser brikkene rundt dagens måned, dato og ukedag i Dagens utfordring fra Papers United.">
     <meta name="theme-color" content="#f6f5f0">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com; img-src 'self' https://www.google-analytics.com https://*.google-analytics.com; base-uri 'none'; form-action 'none'; object-src 'none'">
     <link rel="canonical" href="https://papersunited.com/puzzle-a-day/">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://papersunited.com/puzzle-a-day/">
@@ -17,6 +17,7 @@
     <meta name="twitter:description" content="Klarer du dagens kalenderpuslespill? Prøv dagens utfordring.">
     <link rel="stylesheet" href="puzzle.css?v=svg-ghost-1">
     <script type="module" src="app.js?v=svg-ghost-1"></script>
+    <script src="../analytics-consent.js" defer></script>
     <title>Dagens utfordring – Papers United</title>
   </head>
   <body>
@@ -69,6 +70,44 @@
         </aside>
       </section>
     </main>
-    <footer><a href="../">Papers United</a><span>En liten utfordring, rett i nettleseren.</span></footer>
+    <section class="privacy-information" id="personvern" aria-labelledby="privacy-title">
+      <h2 id="privacy-title">Personvern og besøksstatistikk</h2>
+      <p>
+        Vi bruker Google Analytics 4 bare dersom du velger
+        «Godta analyse». Da kan Google motta opplysninger om
+        besøk og bruk av nettsiden, blant annet sidevisninger
+        og tekniske opplysninger. Opplysninger kan bli
+        behandlet utenfor EØS. Vi bruker statistikken til
+        å forbedre Papers United. Avslår du, laster vi ikke
+        Google Analytics. Valget lagres lokalt i nettleseren
+        din, og du kan trekke tilbake samtykket via
+        «Personvernvalg».
+      </p>
+    </section>
+
+    <div class="consent-banner" id="consent-banner"
+         role="region" aria-label="Valg for besøksstatistikk" hidden>
+      <div>
+        <strong>Kan vi bruke besøksstatistikk?</strong>
+        <p>
+          Med ditt samtykke bruker vi Google Analytics
+          til å forstå besøk på Papers United.
+          Du kan avslå og bruke nettsiden som normalt.
+          <a href="#personvern">Les om personvern</a>.
+        </p>
+      </div>
+      <div class="consent-actions">
+        <button id="consent-decline" type="button">Avslå</button>
+        <button id="consent-accept" type="button">Godta analyse</button>
+      </div>
+    </div>
+
+    <footer>
+      <a href="../">Papers United</a>
+      <span>En liten utfordring, rett i nettleseren.</span>
+      <button type="button" id="privacy-settings">
+        Personvernvalg
+      </button>
+    </footer>
   </body>
 </html>
